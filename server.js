@@ -3,29 +3,28 @@ const express = require('express');
 const { google } = require('googleapis');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const fs = require('fs');
-const path = require('path');
+const fs = require('fs'); // Required for local fallback directory creation
+const path = require('path'); // Not strictly needed for this version but good practice if manipulating paths
 const cors = require('cors');
 
 const app = express();
-app.use(express.json()); // Middleware to parse JSON bodies
+app.use(express.json());
 
-// Configure CORS for your Netlify frontend URL for better security
-// const allowedOrigins = ['YOUR_NETLIFY_APP_URL_HERE', 'http://localhost:3000', 'http://localhost:8888']; // Add localhost for React dev and Netlify dev
+// For production, restrict CORS to your Netlify domain.
+// Example:
+// const allowedOrigins = ['https://your-netlify-app-name.netlify.app'];
 // app.use(cors({
 //   origin: function (origin, callback) {
-//     if (!origin) return callback(null, true); // Allow requests with no origin (like curl/Postman)
-//     if (allowedOrigins.indexOf(origin) === -1) {
-//       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-//       return callback(new Error(msg), false);
+//     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
 //     }
-//     return callback(null, true);
 //   }
 // }));
-app.use(cors()); // For simplicity in this example, allow all. Restrict in production.
+app.use(cors()); // Current: Allow all origins
 
-
-const PORT = process.env.PORT || 3001; // Changed default to 3001 to avoid common React dev port
+const PORT = process.env.PORT || 3001;
 const SHEET_ID = process.env.SHEET_ID;
 const API_KEY = process.env.API_KEY;
 
@@ -46,20 +45,32 @@ try {
     sheets = google.sheets({ version: 'v4', auth });
 } catch (error) {
     console.error('Failed to initialize Google Sheets API:', error.message);
+    // Consider if the app should exit or continue with degraded functionality
 }
 
 // --- WhatsApp Client Setup ---
-const SESSION_FILE_PATH_BASE = process.env.WA_SESSION_DIR || './wa_sessions';
-console.log(`WhatsApp session data will be stored in directory: ${SESSION_FILE_PATH_BASE}`);
-const SESSION_DATA_PATH_FOR_CLIENT = path.join(SESSION_FILE_PATH_BASE, 'my_bot_session');
-console.log(`Specific sessoin data path for LocalAuth: $(SESSION_DATA_PATH_FOR_CLIENT)`);
-//if (!fs.existsSync(SESSION_FILE_PATH_BASE)) {
-//    console.log(`Creating session directory: ${SESSION_FILE_PATH_BASE}`);
-  //  fs.mkdirSync(SESSION_FILE_PATH_BASE, { recursive: true });
-//}
+// This will be /var/data/wa_sessions on Render, or ./wa_sessions_local_fallback locally if WA_SESSION_DIR is not set.
+const effectiveDataPath = process.env.WA_SESSION_DIR || './wa_sessions_local_fallback';
+
+console.log(`WhatsApp client will use dataPath for LocalAuth: ${effectiveDataPath}`);
+
+// For local development: if WA_SESSION_DIR is not set (i.e., not on Render)
+// and the fallback directory doesn't exist, create it.
+if (!process.env.WA_SESSION_DIR && !fs.existsSync(effectiveDataPath)) {
+    console.log(`Local fallback: Creating session directory: ${effectiveDataPath}`);
+    try {
+        fs.mkdirSync(effectiveDataPath, { recursive: true });
+        console.log(`Successfully created local fallback directory: ${effectiveDataPath}`);
+    } catch (mkdirErr) {
+        console.error(`Failed to create local fallback directory ${effectiveDataPath}:`, mkdirErr);
+        // This could be critical for local testing if it fails.
+    }
+}
 
 const client = new Client({
-    authStrategy: new LocalAuth({ dataPath: SESSION_DATA_PATH_FOR_CLIENT }),
+    authStrategy: new LocalAuth({
+        dataPath: effectiveDataPath // LocalAuth will create its 'session' or 'Default' folder inside this path
+    }),
     puppeteer: {
         headless: true,
         args: [
@@ -69,7 +80,6 @@ const client = new Client({
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
             '--no-zygote',
-            // '--single-process', // Can cause issues on some systems
             '--disable-gpu'
         ],
     },
@@ -100,14 +110,20 @@ client.on('disconnected', (reason) => {
     console.log('WhatsApp client was logged out:', reason);
 });
 
-client.initialize().catch(err => console.error("Error initializing WhatsApp client:", err));
+// Initialize client and catch potential errors during initialization
+client.initialize().catch(err => {
+    console.error("Error initializing WhatsApp client:", err);
+    // Depending on the error, you might want to exit the process or attempt a retry strategy
+});
+
 
 // --- API Key Middleware ---
 const apiKeyAuth = (req, res, next) => {
     const receivedApiKey = req.headers['x-api-key'];
-    if (receivedApiKey && receivedApiKey === API_KEY) {
+    if (API_KEY && receivedApiKey && receivedApiKey === API_KEY) {
         next();
     } else {
+        if (!API_KEY) console.warn("API_KEY is not set on the server. Endpoint is effectively unprotected.");
         res.status(401).json({ error: 'Unauthorized: Missing or invalid API Key' });
     }
 };
@@ -118,103 +134,100 @@ app.get('/', (req, res) => {
 });
 
 app.post('/send-messages', apiKeyAuth, async (req, res) => {
-    const { messageTemplate } = req.body; // Get messageTemplate from request body
+    const { messageTemplate } = req.body;
 
     if (!messageTemplate) {
         return res.status(400).json({ error: 'Missing messageTemplate in request body.' });
     }
+    if (messageTemplate.length > 2000) { // Basic input validation
+        return res.status(400).json({ error: 'Message template is too long (max 2000 chars).' });
+    }
 
-    if (!client.info) {
-        return res.status(503).json({ error: 'WhatsApp client not ready. Scan QR code if needed.' });
+    if (!client.info) { // Check if client is ready (connected to WhatsApp)
+        return res.status(503).json({ error: 'WhatsApp client not ready. Please scan QR code if needed or wait for connection.' });
     }
     if (!sheets) {
         return res.status(500).json({ error: 'Google Sheets API not initialized. Check server logs.' });
     }
 
     try {
-        console.log('Fetching contacts from Google Sheet ID:');
+        console.log('Fetching contacts from Google Sheet...'); // Removed SHEET_ID from log for brevity/security
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SHEET_ID,
             range: 'Sheet1!A:B', // Columns: name, phone
         });
 
         const rows = response.data.values;
-        if (!rows || rows.length <= 1) { // <=1 to account for header row
+        if (!rows || rows.length <= 1) {
             return res.status(404).json({ message: 'No contact data found in sheet or only header row present.' });
         }
 
-        const dataRows = rows.slice(1); // Skip header
+        const dataRows = rows.slice(1);
         let messagesSent = 0;
-        let errorsEncountered = []; // Renamed for clarity
+        let errorsEncountered = [];
 
         console.log(`Found ${dataRows.length} contacts. Processing...`);
 
-                for (const row of dataRows) {
+        for (const row of dataRows) {
             const name = row[0];
-            let phone = row[1]; // Phone number from the sheet
-            const originalPhoneForError = phone; // Keep original for error logging
+            let phone = row[1];
+            const originalPhoneForError = String(phone);
 
             if (!name || !phone) {
-                console.warn('Skipping row due to missing name or phone:', row);
-                errorsEncountered.push({ contact: {name, phone: originalPhoneForError}, error: 'Missing name or phone' });
+                console.warn('Skipping row due to missing data (name or phone):', { name, phone: originalPhoneForError });
+                errorsEncountered.push({ contact: { name, phone: originalPhoneForError }, error: 'Missing name or phone' });
                 continue;
             }
 
-            // 1. Convert to string and clean: Allow only digits and '+' initially
             phone = String(phone).replace(/[^0-9+]/g, '');
-
-            // 2. If it starts with '+', remove it for easier processing of '91'
             if (phone.startsWith('+')) {
-                phone = phone.substring(1); // e.g., +91987... becomes 91987...
+                phone = phone.substring(1);
             }
-            // Now phone contains only digits, e.g., "917010663166" or "7010663166"
-
-            // 3. Prepend '91' if it's a 10-digit number and doesn't already start with '91'
             if (phone.length === 10 && !phone.startsWith('91')) {
-                phone = '91' + phone; // e.g., 7010663166 becomes 917010663166
+                phone = '91' + phone;
             }
-            // Now phone should be like "91xxxxxxxxxx" or "xxxxxxxxxx" if it wasn't a 10-digit Indian number
-
-            // 4. Append @c.us - THIS IS THE CRUCIAL MISSING STEP
             if (!phone.endsWith('@c.us')) {
                 phone = `${phone}@c.us`;
             }
-            // Now phone is like "917010663166@c.us"
 
             const personalizedMessage = messageTemplate.replace(/{name}/g, name);
 
             try {
-                console.log(`Sending...`);
-                await client.sendMessage(phone, personalizedMessage); // `phone` now includes @c.us
+                console.log(`Attempting to send message to contact: ${name} (Phone: ${phone})`);
+                await client.sendMessage(phone, personalizedMessage);
                 messagesSent++;
-                await new Promise(resolve => setTimeout(resolve, Math.random() * 1500 + 500));
+                // Consider making delay configurable or slightly longer for larger lists
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 1500 + 1000)); // 1-2.5 seconds delay
             } catch (err) {
-                console.error(`Failed to send message to ${phone} (original sheet value: ${originalPhoneForError}, contact name: ${name}):`, err.message);
-                errorsEncountered.push({ contact: {name, phone: originalPhoneForError}, error: err.message });
+                console.error(`Failed to send message to ${phone} (Original: ${originalPhoneForError}, Name: ${name}):`, err.message);
+                errorsEncountered.push({ contact: { name, phone: originalPhoneForError }, error: err.message });
             }
         }
 
         res.json({
-            message: 'Message sending process completed.',
+            status: 'Completed',
             totalContactsInSheet: dataRows.length,
             messagesSuccessfullySent: messagesSent,
             errors: errorsEncountered
         });
 
     } catch (err) {
-        console.error('Error processing /send-messages:', err);
-        if (err.response && err.response.data && err.response.data.error) {
-            console.error("Google API Error:", err.response.data.error);
+        console.error('Error processing /send-messages request:', err);
+        if (err.response && err.response.data && err.response.data.error && err.response.data.error.message) { // Google API specific error
+            console.error("Google API Error details:", err.response.data.error);
             res.status(500).json({ error: 'Failed to fetch data from Google Sheets.', details: err.response.data.error.message });
         } else {
-            res.status(500).json({ error: 'An internal error occurred on the backend.', details: err.message });
+            res.status(500).json({ error: 'An internal server error occurred.', details: err.message });
         }
     }
 });
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    //if (!API_KEY) console.warn("Warning: API_KEY is not set. The /send-messages endpoint is unprotected!");
-    //if (!SHEET_ID) console.warn("Warning: SHEET_ID is not set. Google Sheets integration will fail!");
-    //if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) console.warn("Warning: GOOGLE_APPLICATION_CREDENTIALS_BASE64 is not set. Google Sheets integration will fail!");
+    if (!API_KEY) console.warn("CRITICAL WARNING: API_KEY is not set. The /send-messages endpoint is UNPROTECTED!");
+    if (!SHEET_ID) console.warn("WARNING: SHEET_ID is not set. Google Sheets integration will fail!");
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) console.warn("WARNING: GOOGLE_APPLICATION_CREDENTIALS_BASE64 is not set. Google Sheets integration will fail!");
+    if (!process.env.WA_SESSION_DIR && process.env.NODE_ENV === 'production') {
+        console.warn("WARNING: WA_SESSION_DIR is not set in a production-like environment. WhatsApp sessions may not persist reliably.");
+    }
 });
