@@ -3,13 +3,13 @@ const express = require('express');
 const { google } = require('googleapis');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const fs = require('fs'); // Required for local fallback directory creation
+const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 
 const app = express();
 app.use(express.json());
-app.use(cors()); // Consider restricting this in production
+app.use(cors());
 
 const PORT = process.env.PORT || 3001;
 const SHEET_ID = process.env.SHEET_ID;
@@ -19,7 +19,7 @@ const API_KEY = process.env.API_KEY;
 let sheets;
 try {
     const credentialsBase64 = process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64;
-    if (!credentialsBase64) throw new Error("GOOGLE_APPLICATION_CREDENTIALS_BASE64 environment variable is not set.");
+    if (!credentialsBase64) throw new Error("GOOGLE_APPLICATION_CREDENTIALS_BASE64 env var not set.");
     const decodedCredentials = Buffer.from(credentialsBase64, 'base64').toString('ascii');
     const credentials = JSON.parse(decodedCredentials);
     const auth = new google.auth.GoogleAuth({ credentials, scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] });
@@ -28,25 +28,28 @@ try {
     console.error('Failed to initialize Google Sheets API:', error.message);
 }
 
-// --- WhatsApp Client Setup (Option A) ---
-const effectiveDataPath = process.env.WA_SESSION_DIR || './wa_sessions_local_fallback';
-console.log(`LocalAuth will use dataPath: ${effectiveDataPath} and clientId: 'main_session'`);
+// --- WhatsApp Client Setup for Render Free Tier (Ephemeral Session) ---
+// Sessions will NOT persist across deploys/restarts on Render free tier.
+// LocalAuth will attempt to write to a local directory.
+const sessionDataPath = './wa_ephemeral_session'; // Relative path, will be in the app's ephemeral storage
+console.log(`WhatsApp session (ephemeral) will be attempted at: ${path.resolve(sessionDataPath)}`);
 
-// For local development fallback directory creation
-if (!process.env.WA_SESSION_DIR && !fs.existsSync(effectiveDataPath)) {
-    console.log(`Local fallback: Creating base session directory: ${effectiveDataPath}`);
+// Attempt to create this directory if it doesn't exist.
+// This should work on the ephemeral filesystem.
+if (!fs.existsSync(sessionDataPath)) {
+    console.log(`Creating ephemeral session directory: ${sessionDataPath}`);
     try {
-        fs.mkdirSync(effectiveDataPath, { recursive: true });
-        console.log(`Successfully created local fallback base directory: ${effectiveDataPath}`);
+        fs.mkdirSync(sessionDataPath, { recursive: true });
+        console.log(`Successfully created ephemeral session directory: ${sessionDataPath}`);
     } catch (mkdirErr) {
-        console.error(`Failed to create local fallback base directory ${effectiveDataPath}:`, mkdirErr);
+        // If this fails, LocalAuth will also likely fail.
+        console.error(`Failed to create ephemeral session directory ${sessionDataPath}:`, mkdirErr);
     }
 }
 
 const client = new Client({
     authStrategy: new LocalAuth({
-        dataPath: effectiveDataPath,
-        clientId: 'main_session' // LocalAuth will attempt to create a 'main_session' folder inside dataPath
+        dataPath: sessionDataPath // Use the local ephemeral path
     }),
     puppeteer: {
         headless: true,
@@ -57,8 +60,20 @@ const client = new Client({
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
             '--no-zygote',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--disable-software-rasterizer', // Might help in resource-constrained envs
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding',
+            '--disable-popup-blocking',
+            '--disable-hang-monitor',
+            '--disable-client-side-phishing-detection',
+            '--disable-features=IsolateOrigins,site-per-process,TranslateUI',
+            '--disable-sync',
+            '--metrics-recording-only',
+            '--no-pings'
         ],
+        // executablePath: '/usr/bin/google-chrome-stable' // Only if you install Chrome separately, Render's Node env might have Chromium
     },
     webVersionCache: {
         type: 'remote',
@@ -66,14 +81,16 @@ const client = new Client({
     }
 });
 
-client.on('qr', qr => { qrcode.generate(qr, { small: true }); console.log('Scan QR to connect.'); });
-client.on('ready', () => { console.log('WhatsApp client is ready!'); });
-client.on('authenticated', () => { console.log('WhatsApp client authenticated!'); });
+// ... (rest of your client event handlers, API middleware, routes, app.listen are the same) ...
+// (Make sure they are included below this block)
+
+client.on('qr', qr => { qrcode.generate(qr, { small: true }); console.log('Scan QR to connect. Session will be lost on restart/redeploy.'); });
+client.on('ready', () => { console.log('WhatsApp client is ready! (Ephemeral session)'); });
+client.on('authenticated', () => { console.log('WhatsApp client authenticated! (Ephemeral session)'); });
 client.on('auth_failure', msg => { console.error('WhatsApp authentication failure:', msg); });
 client.on('disconnected', (reason) => { console.log('WhatsApp client was logged out:', reason); });
-client.initialize().catch(err => { console.error("Error initializing WhatsApp client:", err); });
+client.initialize().catch(err => { console.error("Error initializing WhatsApp client (ephemeral session):", err); });
 
-// --- API Key Middleware ---
 const apiKeyAuth = (req, res, next) => {
     const receivedApiKey = req.headers['x-api-key'];
     if (API_KEY && receivedApiKey && receivedApiKey === API_KEY) {
@@ -84,9 +101,8 @@ const apiKeyAuth = (req, res, next) => {
     }
 };
 
-// --- API Endpoints ---
 app.get('/', (req, res) => {
-    res.send('WhatsApp Bot Backend is running. Use POST /send-messages with API Key and messageTemplate.');
+    res.send('WhatsApp Bot Backend is running (Ephemeral Session). Use POST /send-messages with API Key and messageTemplate.');
 });
 
 app.post('/send-messages', apiKeyAuth, async (req, res) => {
@@ -151,9 +167,9 @@ app.post('/send-messages', apiKeyAuth, async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT} (Ephemeral WhatsApp Session)`);
     if (!API_KEY) console.warn("CRITICAL WARNING: API_KEY not set!");
     if (!SHEET_ID) console.warn("WARNING: SHEET_ID not set!");
     if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) console.warn("WARNING: GOOGLE_APPLICATION_CREDENTIALS_BASE64 not set!");
-    if (!process.env.WA_SESSION_DIR && process.env.NODE_ENV === 'production') console.warn("WARNING: WA_SESSION_DIR not set in production!");
+    // No longer need to warn about WA_SESSION_DIR in production if we accept ephemeral sessions
 });
