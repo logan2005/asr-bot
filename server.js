@@ -69,7 +69,8 @@ if (!process.env.WA_SESSION_DIR && !fs.existsSync(effectiveDataPath)) {
 
 const client = new Client({
     authStrategy: new LocalAuth({
-        dataPath: effectiveDataPath // LocalAuth will create its 'session' or 'Default' folder inside this path
+        dataPath: effectiveDataPath,
+        clientId: 'main_session'
     }),
     puppeteer: {
         headless: true,
