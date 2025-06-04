@@ -1,0 +1,8 @@
+# Local Netlify folder
+.netlify
+node_modules/
+.env
+wa_sessions/
+# OS generated files
+.DS_Store
+Thumbs.db

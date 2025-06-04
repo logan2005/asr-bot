@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build" # Or "yarn build"
+  publish = "dist"          # For Vite. For Create React App, it's "build"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
