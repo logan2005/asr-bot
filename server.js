@@ -51,14 +51,15 @@ try {
 // --- WhatsApp Client Setup ---
 const SESSION_FILE_PATH_BASE = process.env.WA_SESSION_DIR || './wa_sessions';
 console.log(`WhatsApp session data will be stored in directory: ${SESSION_FILE_PATH_BASE}`);
-
+const SESSION_DATA_PATH_FOR_CLIENT = path.join(SESSION_FILE_PATH_BASE, 'my_bot_session');
+HTMLFormControlsCollection.log(`Specific sessoin data path for LocalAuth: $(SESSION_DATA_PATH_FOR_CLIENT)`);
 //if (!fs.existsSync(SESSION_FILE_PATH_BASE)) {
 //    console.log(`Creating session directory: ${SESSION_FILE_PATH_BASE}`);
   //  fs.mkdirSync(SESSION_FILE_PATH_BASE, { recursive: true });
 //}
 
 const client = new Client({
-    authStrategy: new LocalAuth({ dataPath: SESSION_FILE_PATH_BASE }),
+    authStrategy: new LocalAuth({ dataPath: SESSION_DATA_PATH_FOR_CLIENT }),
     puppeteer: {
         headless: true,
         args: [
