@@ -1,0 +1,4 @@
+2025/06/05-11:00:55.496 235c Creating DB D:\asr\bot\wa_ephemeral_session\session\Default\Session Storage since it was missing.
+2025/06/05-11:00:55.505 235c Reusing MANIFEST D:\asr\bot\wa_ephemeral_session\session\Default\Session Storage/MANIFEST-000001
+2025/06/05-11:00:55.506 235c Recovering log #3
+2025/06/05-11:00:55.506 235c Reusing old log D:\asr\bot\wa_ephemeral_session\session\Default\Session Storage/000003.log 

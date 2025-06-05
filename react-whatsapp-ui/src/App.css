@@ -1,3 +1,4 @@
+/* General Body and App Container */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,39 +6,85 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f0f2f5; /* WhatsApp-like background */
-  color: #111b21; /* Dark text color */
+  background-color: #e0f2f7; /* Very light blue-cyan background */
+  color: #263238; /* Dark blue-grey text */
 }
 
 .App {
   text-align: center;
   max-width: 700px;
-  margin: 20px auto;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 30px auto;
+  padding: 0; /* Remove padding to allow header to be full width */
+  background-color: #ffffff; /* White container */
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 105, 135, 0.15); /* Softer shadow with blue tint */
+  overflow: hidden; /* Ensures header border-radius applies */
 }
 
+/* Header */
 .App-header {
-  background-color: #008069; /* WhatsApp Green */
-  padding: 20px;
+  background: linear-gradient(135deg, #0077c2, #00a1d9); /* Light blue gradient */
+  padding: 25px 20px;
   color: white;
-  border-radius: 8px 8px 0 0;
+  /* border-radius: 12px 12px 0 0; */ /* Removed as App container handles it */
 }
 
 .App-header h1 {
   margin: 0 0 10px 0;
-  font-size: 1.8em;
+  font-size: 2em; /* Slightly larger */
+  font-weight: 600;
 }
 
 .App-header p {
-  font-size: 0.9em;
-  margin: 5px 0;
+  font-size: 0.95em;
+  margin: 8px 0;
+  opacity: 0.9;
 }
 
+/* WhatsApp Status Container within Header */
+.whatsapp-status-container {
+  background-color: rgba(255, 255, 255, 0.1); /* Subtle highlight */
+  padding: 15px;
+  margin-top: 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.whatsapp-status-container h2 {
+  margin: 0 0 10px 0;
+  font-size: 1.2em;
+  font-weight: 500;
+}
+.whatsapp-status-container .status-initializing,
+.whatsapp-status-container .status-checking_status { color: #ffeb3b; } /* Yellow for pending states */
+.whatsapp-status-container .status-qr_pending { color: #ffc107; } /* Amber for QR */
+.whatsapp-status-container .status-ready { color: #ffffff; } /* Light Green for ready */
+.whatsapp-status-container .status-auth_failure { color: #ef9a9a; } /* Light Red for failure */
+.whatsapp-status-container .status-disconnected { color: #ffb74d; } /* Orange for disconnected */
+.whatsapp-status-container .status-error_initializing { color: #e57373; } /* Reddish for error */
+
+
+.qr-code-area {
+  margin-top: 10px;
+  background-color: #fff; /* White background for QR */
+  padding: 15px;
+  border-radius: 6px;
+  display: inline-block; /* To center it if needed */
+}
+.qr-code-area p {
+  color: #333; /* Darker text for readability on white */
+  margin-bottom: 10px;
+}
+.qr-code-area img {
+  border: none; /* Remove previous border */
+  padding: 0; /* Remove previous padding */
+  display: block;
+  margin: auto;
+}
+
+/* Main Content Area */
 main {
-  padding: 20px;
+  padding: 25px;
 }
 
 .form-group {
@@ -48,100 +95,255 @@ main {
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  font-weight: bold;
-  color: #54656f; /* WhatsApp secondary text color */
+  font-weight: 500;
+  color: #0077c2; /* Blue for labels */
 }
 
 textarea {
-  width: calc(100% - 22px); /* Account for padding and border */
+  width: calc(100% - 24px);
   padding: 10px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid #b0bec5; /* Lighter blue-grey border */
   font-size: 1em;
   min-height: 80px;
   line-height: 1.5;
   resize: vertical;
+  color: #ffffff;
 }
 
 textarea:focus {
-  border-color: #00a884; /* WhatsApp accent green */
-  box-shadow: 0 0 0 2px rgba(0, 168, 132, 0.2);
+  border-color: #0077c2; /* Highlight with main blue */
+  box-shadow: 0 0 0 3px rgba(0, 119, 194, 0.2);
   outline: none;
 }
 
 button {
-  background-color: #00a884; /* WhatsApp accent green */
+  background-color: #0091ea; /* Brighter blue for button */
   color: white;
-  padding: 12px 20px;
+  padding: 12px 25px;
   border: none;
-  border-radius: 25px; /* Pill shape */
+  border-radius: 25px;
   cursor: pointer;
-  font-size: 1em;
-  font-weight: bold;
-  transition: background-color 0.2s ease-in-out;
+  font-size: 1.05em;
+  font-weight: 500;
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease;
   width: 100%;
-  max-width: 300px; /* Max width for the button */
+  max-width: 320px;
   display: block;
-  margin: 20px auto 0 auto; /* Center the button */
+  margin: 25px auto 0 auto;
 }
 
-button:hover {
-  background-color: #008069; /* Darker WhatsApp green */
+button:hover:not(:disabled) {
+  background-color: #0077c2; /* Darker blue on hover */
+  transform: translateY(-1px);
 }
 
 button:disabled {
-  background-color: #d6d6d6; /* Lighter grey for disabled */
-  color: #808080;
+  background-color: #90a4ae; /* Muted blue-grey for disabled */
+  color: #cfd8dc;
   cursor: not-allowed;
 }
 
+/* Status Messages for Send Operation */
 .status-message {
   margin-top: 25px;
   padding: 15px;
   border-radius: 6px;
   text-align: left;
   line-height: 1.6;
+  font-size: 0.95em;
 }
 
 .status-message.success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background-color: #e8f5e9; /* Light green */
+  color: #000000;
+  border: 1px solid #000000;
 }
 
 .status-message.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.result-details {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-}
-
-.result-details p {
-  margin: 5px 0;
-  font-size: 0.9em;
-}
-
-.result-details ul {
-  padding-left: 20px;
-  font-size: 0.85em;
-  max-height: 150px;
-  overflow-y: auto;
-}
-
-.result-details li {
-  margin-bottom: 3px;
+  background-color: #ffebee; /* Light red */
+  color: #c62828;
+  border: 1px solid #ef9a9a;
 }
 
 
+
+/* Footer */
 footer {
   margin-top: 30px;
-  padding-top: 15px;
-  border-top: 1px solid #e0e0e0;
-  font-size: 0.8em;
-  color: #54656f;
+  padding: 20px;
+  border-top: 1px solid #cfd8dc; /* Lighter border */
+  font-size: 0.85em;
+  color: #54657f; /* Muted blue-grey */
+  background-color: #f5f7f8; /* Very light off-white/blue for footer bg */
+  border-radius: 0 0 12px 12px;
 }
+
+/* ... (add this to your existing App.css) ... */
+
+.tick-animation-container {
+  display: inline-block; /* Or flex, if you want to align with text */
+  margin-left: 10px; /* Space it from the "READY" text */
+}
+
+.checkmark {
+  width: 28px; /* Adjust size as needed */
+  height: 28px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 3;
+  stroke: #000000; /* Green color for the tick */
+  stroke-miterlimit: 10;
+  box-shadow: inset 0px 0px 0px #000000;
+  animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+  position: relative;
+  top: -2px; /* Minor alignment adjustment */
+}
+
+.checkmark__circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 2;
+  stroke-miterlimit: 10;
+  stroke: #4caf50;
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark__check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes scale {
+  0%, 100% {
+    transform: none;
+  }
+  50% {
+    transform: scale3d(1.1, 1.1, 1);
+  }
+}
+
+@keyframes fill {
+  100% {
+    box-shadow: inset 0px 0px 0px 30px #4caf50; /* Fill color */
+  }
+}
+
+/* --- Modify existing button rule --- */
+button.submit-button { /* Add .submit-button class for specificity */
+  background-color: #0091ea; /* Brighter blue for button */
+  color: white;
+  padding: 0; /* Remove padding, we'll control size with width/height */
+  border: none;
+  border-radius: 50px; /* Start with a more rounded shape, will become circle */
+  cursor: pointer;
+  font-size: 1.05em;
+  font-weight: 500;
+  transition: background-color 0.3s ease-in-out, 
+              width 0.4s ease-in-out, 
+              border-radius 0.4s ease-in-out,
+              transform 0.1s ease;
+  width: 100%;
+  max-width: 320px;
+  height: 48px; /* Fixed height */
+  display: flex; /* For centering content */
+  align-items: center;
+  justify-content: center;
+  margin: 25px auto 0 auto;
+  overflow: hidden; /* Important for animations */
+  position: relative; /* For absolute positioning of pseudo-elements if needed */
+}
+
+button.submit-button:hover:not(:disabled) {
+  background-color: #0077c2;
+  transform: translateY(-1px);
+}
+
+button.submit-button:disabled {
+  background-color: #90a4ae;
+  color: #cfd8dc;
+  cursor: not-allowed;
+}
+
+/* --- New styles for loading and completed states --- */
+button.submit-button.loading {
+  width: 48px; /* Make it round - same as height */
+  height: 48px;
+  border-radius: 50%; /* Circle */
+  background-color: #0077c2; /* Darker Blue for loading */
+  color: black; /* Text color for loader (if any text was shown) */
+  cursor: wait;
+}
+
+button.submit-button.completed {
+  width: 48px; /* Make it round */
+  height: 48px;
+  border-radius: 50%;
+  background-color: #4CAF50; /* Green for completed */
+  cursor: default;
+}
+
+/* --- Loader Animation (Simple Spinner) --- */
+.button-loader {
+  border: 4px solid rgba(255, 255, 255, 0.3); /* Light border */
+  border-left-color: #ffffff; /* White spinner part */
+  border-radius: 50%;
+  width: 24px; /* Size of the spinner */
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Checkmark Animation for Button (similar to status checkmark) --- */
+/* Ensure SVG is white for the button */
+.button-checkmark svg,
+.button-checkmark .checkmark__circle,
+.button-checkmark .checkmark__check {
+  stroke: white !important; /* Make the button checkmark white */
+}
+
+.button-checkmark {
+  width: 28px;
+  height: 28px;
+  display: block;
+  stroke-width: 3;
+  /* stroke: white; */ /* Set by specific rules above */
+  stroke-miterlimit: 10;
+  /* No fill animation needed for button, background changes */
+  animation: scale .3s ease-in-out .4s both; /* Just scale */
+}
+
+.button-checkmark__circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 2;
+  stroke-miterlimit: 10;
+  /* stroke: white; */
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.button-checkmark__check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.3s forwards; /* Start checkmark draw a bit sooner */
+}
+
+/* Re-use existing keyframes if they are suitable, or redefine if needed */
+/* @keyframes stroke { 100% { stroke-dashoffset: 0; } } */
+/* @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } } */

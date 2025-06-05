@@ -13,9 +13,12 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
     "fs": "^0.0.1-security",
     "googleapis": "^149.0.0",
+    "helmet": "^8.1.0",
     "path": "^0.12.7",
+    "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.30.0"
   }
