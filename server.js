@@ -126,9 +126,12 @@ client.on('ready', () => {
 });
 
 client.on('authenticated', () => {
-    console.log('WhatsApp client authenticated! (Ephemeral session)');
+    console.log('WhatsApp client authenticated! (Ephemeral session). Waiting a moment...');
     currentQRDataURL = null;
-    whatsAppClientStatus = 'READY';
+    setTimeout(() => {
+        console.log('Setting client to READY after short delay.');
+        whatsAppClientStatus = 'READY';
+    }, 3000); // Wait 3 seconds
 });
 
 client.on('auth_failure', msg => {
@@ -143,7 +146,7 @@ client.on('disconnected', (reason) => {
     whatsAppClientStatus = 'DISCONNECTED';
     // Consider re-initialization or other recovery logic here if appropriate for ephemeral sessions
     // For example, after a delay:
-    // setTimeout(() => initializeWhatsAppWithRetries(), 30000); // Retry after 30s
+    setTimeout(() => initializeWhatsAppWithRetries(), 30000); // Retry after 30s
 });
 
 // --- MODIFIED: WhatsApp Initialization with Retries ---

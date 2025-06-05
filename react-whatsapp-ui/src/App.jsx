@@ -168,7 +168,7 @@ function App() {
       <div className="App login-screen animated fadeIn"> {/* Added animation class */}
         <header className="App-header login-header">
           <img src="/logo.jpg" alt="ASR Bot Logo" className="app-logo" />
-          <h1>ASR Bulk Messenger</h1>
+          <h1>ASR Messenger</h1>
           <p>Securely send WhatsApp messages via Google Sheets.</p>
         </header>
         <main className="login-main">
@@ -177,7 +177,7 @@ function App() {
           </button>
           <p className="login-note">Note: Sign up is by invitation only.</p>
         </main>
-        <footer className="login-footer"><p>© {new Date().getFullYear()} ASR Solutions</p></footer>
+        <footer className="login-footer"><p>© {new Date().getFullYear()} Logan Tech Solutions</p><p>Powered by Logadheenan</p></footer>
       </div>
     );
   }
@@ -188,7 +188,7 @@ function App() {
       <header className="App-header">
         <div className="header-top-bar">
           <img src="/logo.jpg" alt="ASR Bot Logo" className="app-logo-small" />
-          <h1>ASR Bulk Messenger</h1>
+          <h1>ASR Messenger</h1>
           <div className="user-info">
             <span>{user.user_metadata?.full_name || user.email}</span>
             <button onClick={handleLogoutAction} className="logout-button">Logout</button>
@@ -259,7 +259,7 @@ function App() {
           </div>
         )}
       </main>
-      <footer className="app-footer"><p>© {new Date().getFullYear()} ASR Solutions. Secure WhatsApp Automation.</p></footer>
+      <footer className="app-footer"><p>© {new Date().getFullYear()} Logan Tech Solutions. Secure WhatsApp Automation.</p> <p>Powered by Logadheenan</p></footer>
     </div>
   );
 }
