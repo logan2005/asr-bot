@@ -11,10 +11,10 @@ const helmet = require('helmet'); // Basic security headers
 const rateLimit = require('express-rate-limit'); // Basic rate limiting
 
 const app = express();
-
+app.set('trust proxy', 1); // Trust the first proxy (e.g., Render's reverse proxy)
 // --- Security Middlewares ---
 app.use(helmet()); // Set various HTTP headers for security
-app.use(express.json({ limit: '1mb' })); // Parse JSON bodies, limit payload size
+app.use(express.json({ limit: '5mb' })); // Parse JSON bodies, limit payload size
 
 // --- CORS Configuration ---
 // In production, replace '*' with your actual Netlify frontend URL
