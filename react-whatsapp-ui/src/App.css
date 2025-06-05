@@ -343,7 +343,213 @@ button.submit-button.completed {
   stroke-dashoffset: 48;
   animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.3s forwards; /* Start checkmark draw a bit sooner */
 }
+/* BOT/react-whatsapp-ui/src/App.css */
+/* ... (add to existing styles) ... */
 
+.login-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh; /* Make it take up good portion of the screen */
+}
+
+.login-screen main {
+  padding-top: 40px; /* More space for the button */
+}
+
+.logout-button {
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+  margin-left: 10px;
+  transition: background-color 0.2s, color 0.2s;
+}
+.logout-button:hover {
+  background-color: white;
+  color: #0077c2; /* Your header blue */
+}
 /* Re-use existing keyframes if they are suitable, or redefine if needed */
 /* @keyframes stroke { 100% { stroke-dashoffset: 0; } } */
 /* @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } } */
+
+/* BOT/react-whatsapp-ui/src/App.css */
+
+/* --- General App Loading --- */
+.loading-screen { /* For initial auth check */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+}
+.app-loader { /* Simple spinner for initial app load */
+  border: 5px solid #f3f3f3; /* Light grey */
+  border-top: 5px solid #0077c2; /* Blue */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1.5s linear infinite;
+  margin-bottom: 20px;
+}
+/* Use existing @keyframes spin if defined, or add:
+@keyframes spin { to { transform: rotate(360deg); } }
+*/
+
+/* --- Login Screen Specific Styles --- */
+.login-screen {
+  animation: fadeIn 0.5s ease-out;  /* Applied via class */
+}
+.login-header {
+  padding-bottom: 30px; /* More space */
+}
+.app-logo {
+  width: 80px; /* Adjust size */
+  height: 80px;
+  margin-bottom: 15px;
+  border-radius: 10px; /* Optional */
+}
+.login-main {
+  padding: 20px 30px;
+}
+.login-button {
+  width: 100%;
+  max-width: 280px;
+  padding: 14px 20px !important; /* Ensure padding for text */
+  font-size: 1.1em !important;
+}
+.login-note {
+  font-size: 0.85em;
+  color: #54657f;
+  margin-top: 15px;
+}
+.login-footer {
+  background-color: transparent !important; /* Override general footer */
+  border-top: none !important;
+  color: #54657f;
+  padding: 30px 20px;
+}
+
+
+/* --- Main App Styles (when logged in) --- */
+.main-app {
+  animation: fadeIn 0.5s ease-out;  /* Applied via class */
+}
+.header-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  margin-bottom: 15px;
+}
+.app-logo-small {
+  width: 40px; /* Smaller logo in header */
+  height: 40px;
+  margin-right: 15px;
+  border-radius: 6px;
+}
+.header-top-bar h1 {
+  font-size: 1.6em; /* Adjust main title size */
+  margin: 0;
+  flex-grow: 1;
+  text-align: left;
+}
+.user-info {
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+}
+.user-info span {
+  margin-right: 10px;
+  opacity: 0.9;
+}
+.logout-button { /* Styles for logout button from previous example */
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background-color 0.2s, color 0.2s;
+}
+.logout-button:hover {
+  background-color: white;
+  color: #0077c2;
+}
+
+/* WhatsApp Status Text Styling */
+.status-text { /* General class for all status texts */
+  font-weight: 500;
+  margin-top: 5px;
+}
+.status-text-ready { color: #81c784 !important; }
+.status-text-failure { color: #ef9a9a !important; }
+.status-text-disconnected { color: #ffb74d !important; }
+.status-text-error { color: #e57373 !important; }
+.status-text-pending { color: #ffeb3b !important; }
+
+.qr-code-area img {
+  background-color: white; /* Ensure QR code background is white if needed */
+  padding: 5px; /* Small padding around QR actual image */
+  border-radius: 4px;
+}
+
+.app-description {
+  font-size: 0.95em;
+  color: #37474f;
+  margin-bottom: 25px;
+  line-height: 1.6;
+}
+
+.status-message.warning { /* For messages with some errors */
+  background-color: #fff3e0; /* Light orange */
+  color: #e65100;
+  border: 1px solid #ffcc80;
+}
+.status-message.info { /* For general info messages if needed */
+  background-color: #e3f2fd; /* Light blue */
+  color: #0d47a1;
+  border: 1px solid #90caf9;
+}
+
+
+
+/* --- Basic Fade-In Animation --- */
+.animated {
+  animation-duration: 0.7s;
+  animation-fill-mode: both;
+}
+.fadeIn {
+  animation-name: fadeIn;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Ensure button checkmark SVG styling is present */
+.button-checkmark { /* Wrapper for button's checkmark */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.button-checkmark svg.checkmark { /* Target the SVG inside */
+  stroke: white !important; 
+}
+.button-checkmark svg.checkmark .checkmark__circle,
+.button-checkmark svg.checkmark .checkmark__check {
+  stroke: white !important;
+}
+
+/* Ensure other styles for .checkmark, .button-loader, etc. are present from previous examples */
